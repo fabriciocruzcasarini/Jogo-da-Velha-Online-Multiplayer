@@ -466,7 +466,9 @@ async function startServer() {
   } else {
     const distPath = path.resolve(__dirname, 'dist');
     app.use(express.static(distPath));
+    app.use('/assets', express.static(path.resolve(distPath, 'assets')));
     app.use('/jogo-da-velha', express.static(distPath));
+    app.use('/jogo-da-velha/assets', express.static(path.resolve(distPath, 'assets')));
     app.get(['/jogo-da-velha', '/jogo-da-velha/*'], (req, res) => {
       res.sendFile(path.resolve(distPath, 'index.html'));
     });
