@@ -1,0 +1,8 @@
+{
+  "name": "Jogo da Velha Multiplayer",
+  "description": "Jogo da Velha online em tempo real para dois jogadores em aparelhos Android com sincronização instantânea, salas por código/QR e efeitos sonoros táteis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
