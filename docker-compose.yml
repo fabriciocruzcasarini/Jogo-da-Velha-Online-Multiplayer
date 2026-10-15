@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  jogo-da-velha:
+    build: .
+    container_name: jogo-da-velha-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
