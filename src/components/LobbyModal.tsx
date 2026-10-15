@@ -21,7 +21,7 @@ export const LobbyModal: React.FC<LobbyModalProps> = ({
   const qrGeneratedRef = useRef(false);
 
   const shareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}?room=${roomCode}`
+    ? `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomCode}`
     : '';
 
   useEffect(() => {

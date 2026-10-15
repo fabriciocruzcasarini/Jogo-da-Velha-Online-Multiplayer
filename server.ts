@@ -95,8 +95,24 @@ function broadcastToRoom(room: RoomData, type: string, payload: unknown) {
   }
 }
 
-// WebSocket Server
-const wss = new WebSocketServer({ server, path: '/ws' });
+// WebSocket Server with subpath support (supports /ws and /jogo-da-velha/ws)
+const wss = new WebSocketServer({ noServer: true });
+
+server.on('upgrade', (request, socket, head) => {
+  try {
+    const host = request.headers.host || 'localhost';
+    const url = new URL(request.url || '', `http://${host}`);
+    if (url.pathname === '/ws' || url.pathname.endsWith('/ws')) {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+      });
+      return;
+    }
+  } catch (err) {
+    console.error('Error handling upgrade:', err);
+  }
+  socket.destroy();
+});
 
 wss.on('connection', (ws: WebSocket) => {
   let boundRoomId: string | null = null;
@@ -422,11 +438,11 @@ wss.on('connection', (ws: WebSocket) => {
 });
 
 // REST API
-app.get('/api/health', (req, res) => {
+app.get(['/api/health', '/jogo-da-velha/api/health'], (req, res) => {
   res.json({ status: 'ok', activeRooms: rooms.size });
 });
 
-app.get('/api/room/:code', (req, res) => {
+app.get(['/api/room/:code', '/jogo-da-velha/api/room/:code'], (req, res) => {
   const code = req.params.code.toUpperCase();
   const room = rooms.get(code);
   if (!room) {
@@ -447,6 +463,10 @@ async function startServer() {
   } else {
     const distPath = path.resolve(__dirname, 'dist');
     app.use(express.static(distPath));
+    app.use('/jogo-da-velha', express.static(distPath));
+    app.get(['/jogo-da-velha', '/jogo-da-velha/*'], (req, res) => {
+      res.sendFile(path.resolve(distPath, 'index.html'));
+    });
     app.get('*', (req, res) => {
       res.sendFile(path.resolve(distPath, 'index.html'));
     });

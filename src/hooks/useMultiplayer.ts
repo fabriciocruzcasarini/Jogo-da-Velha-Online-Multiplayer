@@ -53,7 +53,8 @@ export function useMultiplayer() {
     }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const basePath = window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
+    const wsUrl = `${protocol}//${window.location.host}${basePath}/ws`;
 
     try {
       const socket = new WebSocket(wsUrl);
