@@ -59,12 +59,14 @@ function generateRoomCode() {
 }
 
 // server.ts
+import fs from "fs";
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = path.dirname(__filename);
 var app = express();
 var server = http.createServer(app);
 var PORT = process.env.PORT || 3e3;
-var isProd = process.env.NODE_ENV === "production";
+var hasDist = fs.existsSync(path.resolve(__dirname, "dist", "index.html"));
+var isProd = process.env.NODE_ENV === "production" || hasDist;
 app.use(express.json());
 var rooms = /* @__PURE__ */ new Map();
 setInterval(() => {
@@ -416,7 +418,7 @@ async function startServer() {
   if (!isProd) {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { middlewareMode: true, allowedHosts: true },
       appType: "spa"
     });
     app.use(vite.middlewares);

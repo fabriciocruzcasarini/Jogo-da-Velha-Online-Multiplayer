@@ -12,13 +12,16 @@ import {
   type PlayerSymbol,
 } from './src/game/rules.ts';
 
+import fs from 'fs';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
-const isProd = process.env.NODE_ENV === 'production';
+const hasDist = fs.existsSync(path.resolve(__dirname, 'dist', 'index.html'));
+const isProd = process.env.NODE_ENV === 'production' || hasDist;
 
 app.use(express.json());
 
@@ -456,7 +459,7 @@ async function startServer() {
   if (!isProd) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { middlewareMode: true, allowedHosts: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
