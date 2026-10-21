@@ -18,6 +18,12 @@ Um jogo da velha moderno, responsivo e em tempo real desenvolvido especialmente 
   - Alvos de toque generosos (mínimo de 64px) e layout `overscroll-none` sem zoom indesejado ou atrasos de clique.
   - Modo escuro vibrante (Cyber Glow Neon) com alto contraste para visibilidade sob luz solar.
 
+- 🎙️ **Chat de Voz em Tempo Real (WebRTC P2P)**:
+  - Comunicação de áudio de ponta a ponta sem sobrecarregar o servidor (P2P via WebRTC).
+  - **Microfone aberto com botão de silenciar (Mute/Desmutar)** a 1 toque.
+  - **Indicador animado de ondas sonoras** e borda pulsante no card do jogador que estiver falando (detecção via `AnalyserNode`).
+  - Cancelamento de eco (`echoCancellation`), ganho automático e supressão de ruído ativo.
+
 - 💬 **Reações e Interatividade**:
   - Barra de reações instantâneas com emojis animados (🔥, 👏, 😂, 😱, 🏆, 🎯) e frases rápidas que flutuam na tela do adversário em tempo real.
 

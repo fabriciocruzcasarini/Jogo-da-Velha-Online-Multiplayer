@@ -8,6 +8,7 @@ import { GameOverModal } from './components/GameOverModal.tsx';
 import { ReactionDrawer } from './components/ReactionDrawer.tsx';
 import { OfflineIndicator } from './components/OfflineIndicator.tsx';
 import { useMultiplayer } from './hooks/useMultiplayer.ts';
+import { useVoiceChat } from './hooks/useVoiceChat.ts';
 import {
   checkWinner,
   createEmptyBoard,
@@ -51,14 +52,46 @@ export default function App() {
     mySymbol,
     errorMessage,
     reactions,
+    remoteVoiceStatus,
     createRoom,
     joinRoom,
     makeMove,
     requestRematch,
     sendReaction,
+    sendWebRTCSignal,
+    sendVoiceStatus,
+    onWebRTCSignal,
     leaveRoom,
     clearError,
   } = useMultiplayer();
+
+  // Find target opponent ID in room
+  const targetPlayerId = useMemo(() => {
+    if (!room || !myPlayerId) return null;
+    return Object.keys(room.players).find((id) => id !== myPlayerId) || null;
+  }, [room, myPlayerId]);
+
+  // WebRTC Voice Chat Hook
+  const {
+    isVoiceActive,
+    isMuted: isVoiceMuted,
+    isSpeakingLocal,
+    isSpeakingRemote,
+    permissionError: voicePermissionError,
+    startVoice,
+    toggleMute: toggleVoiceMute,
+    leaveVoice,
+    clearPermissionError: clearVoicePermissionError,
+  } = useVoiceChat({
+    roomId: room?.id,
+    myPlayerId,
+    targetPlayerId,
+    isRoomActive: mode === 'online' && room !== null,
+    sendSignal: sendWebRTCSignal,
+    sendVoiceStatus,
+    onSignal: onWebRTCSignal,
+    remoteVoiceStatus,
+  });
 
   // Modals
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
@@ -149,6 +182,7 @@ export default function App() {
 
   const handleBackToTitle = () => {
     if (mode === 'online') {
+      leaveVoice();
       leaveRoom();
     }
     setMode('title');
@@ -280,6 +314,19 @@ export default function App() {
         </div>
       )}
 
+      {/* Voice Permission Error Banner */}
+      {voicePermissionError && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-amber-500/95 text-slate-950 text-xs font-bold shadow-xl">
+          <span>{voicePermissionError}</span>
+          <button
+            onClick={clearVoicePermissionError}
+            className="px-2 py-0.5 rounded-lg bg-black/20 hover:bg-black/30 text-[11px] text-white"
+          >
+            Fechar
+          </button>
+        </div>
+      )}
+
       {/* Screen 1: Title Screen */}
       {mode === 'title' && (
         <TitleScreen
@@ -311,6 +358,21 @@ export default function App() {
             onToggleMute={handleToggleMute}
             onLeave={handleBackToTitle}
             modeLabel={`Sala ${room.code}`}
+            voice={{
+              isActive: isVoiceActive,
+              isMuted: isVoiceMuted,
+              isSpeakingLocal,
+              isSpeakingRemote,
+              isRemoteMuted: remoteVoiceStatus.isMuted,
+              onToggleVoice: () => {
+                if (isVoiceActive) {
+                  leaveVoice();
+                } else {
+                  startVoice();
+                }
+              },
+              onToggleMute: toggleVoiceMute,
+            }}
           />
 
           {/* Turn Prompt Banner */}

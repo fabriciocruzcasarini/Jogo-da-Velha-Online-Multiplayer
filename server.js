@@ -382,6 +382,60 @@ wss.on("connection", (ws) => {
         });
         return;
       }
+      if (type === "webrtc_signal") {
+        const { roomId, senderPlayerId, targetPlayerId, signal } = payload || {};
+        const room = rooms.get(roomId);
+        if (!room) return;
+        if (targetPlayerId && room.players[targetPlayerId]?.ws) {
+          const targetWs = room.players[targetPlayerId].ws;
+          if (targetWs && targetWs.readyState === WebSocket.OPEN) {
+            targetWs.send(
+              JSON.stringify({
+                type: "webrtc_signal",
+                payload: {
+                  senderPlayerId,
+                  signal
+                }
+              })
+            );
+          }
+        } else {
+          for (const [pid, player] of Object.entries(room.players)) {
+            if (pid !== senderPlayerId && player.ws && player.ws.readyState === WebSocket.OPEN) {
+              player.ws.send(
+                JSON.stringify({
+                  type: "webrtc_signal",
+                  payload: {
+                    senderPlayerId,
+                    signal
+                  }
+                })
+              );
+            }
+          }
+        }
+        return;
+      }
+      if (type === "voice_status") {
+        const { roomId, playerId, isMuted, isSpeaking } = payload || {};
+        const room = rooms.get(roomId);
+        if (!room) return;
+        for (const [pid, player] of Object.entries(room.players)) {
+          if (pid !== playerId && player.ws && player.ws.readyState === WebSocket.OPEN) {
+            player.ws.send(
+              JSON.stringify({
+                type: "voice_status",
+                payload: {
+                  playerId,
+                  isMuted,
+                  isSpeaking
+                }
+              })
+            );
+          }
+        }
+        return;
+      }
       if (type === "ping") {
         ws.send(JSON.stringify({ type: "pong" }));
       }

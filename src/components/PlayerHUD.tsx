@@ -1,7 +1,8 @@
 import React from 'react';
-import { Volume2, VolumeX, ArrowLeft, Wifi } from 'lucide-react';
+import { Volume2, VolumeX, ArrowLeft, Mic, MicOff, PhoneCall, PhoneOff } from 'lucide-react';
 import type { PlayerSymbol } from '../game/rules.ts';
 import { playClickSound } from '../utils/audio.ts';
+import { VoiceWaveIndicator } from './VoiceWaveIndicator.tsx';
 
 interface PlayerInfo {
   name: string;
@@ -9,6 +10,16 @@ interface PlayerInfo {
   score: number;
   isMe: boolean;
   connected?: boolean;
+}
+
+export interface VoiceHUDState {
+  isActive: boolean;
+  isMuted: boolean;
+  isSpeakingLocal: boolean;
+  isSpeakingRemote: boolean;
+  isRemoteMuted: boolean;
+  onToggleVoice: () => void;
+  onToggleMute: () => void;
 }
 
 interface PlayerHUDProps {
@@ -21,6 +32,7 @@ interface PlayerHUDProps {
   onToggleMute: () => void;
   onLeave: () => void;
   modeLabel?: string;
+  voice?: VoiceHUDState;
 }
 
 export const PlayerHUD: React.FC<PlayerHUDProps> = ({
@@ -33,8 +45,23 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
   onToggleMute,
   onLeave,
   modeLabel = 'Online',
+  voice,
 }) => {
   const isTurnX = currentTurn === 'X';
+
+  const isSpeakingX = playerX.isMe
+    ? (voice?.isSpeakingLocal ?? false)
+    : (voice?.isSpeakingRemote ?? false);
+  const isSpeakingO = playerO.isMe
+    ? (voice?.isSpeakingLocal ?? false)
+    : (voice?.isSpeakingRemote ?? false);
+
+  const isMutedX = playerX.isMe
+    ? (voice?.isMuted ?? false)
+    : (voice?.isRemoteMuted ?? false);
+  const isMutedO = playerO.isMe
+    ? (voice?.isMuted ?? false)
+    : (voice?.isRemoteMuted ?? false);
 
   return (
     <div className="w-full max-w-md mx-auto mb-3 select-none">
@@ -52,6 +79,67 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
+          {/* Voice Chat Control Pill (Online Only) */}
+          {isOnline && voice && (
+            <>
+              {voice.isActive ? (
+                <div className="flex items-center gap-1 bg-slate-900/90 border border-slate-700 p-0.5 rounded-xl">
+                  {/* Mute / Unmute Button */}
+                  <button
+                    onClick={() => {
+                      playClickSound();
+                      voice.onToggleMute();
+                    }}
+                    aria-label={voice.isMuted ? 'Desmutar microfone' : 'Mutar microfone'}
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold transition active:scale-95 ${
+                      voice.isMuted
+                        ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                        : voice.isSpeakingLocal
+                        ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-400 animate-pulse'
+                        : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    }`}
+                  >
+                    {voice.isMuted ? (
+                      <>
+                        <MicOff className="w-3.5 h-3.5" />
+                        <span className="text-[10px]">Mudo</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="w-3.5 h-3.5" />
+                        <span className="text-[10px]">{voice.isSpeakingLocal ? 'Falando' : 'Voz'}</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Disconnect Voice */}
+                  <button
+                    onClick={() => {
+                      playClickSound();
+                      voice.onToggleVoice();
+                    }}
+                    title="Desconectar do chat de voz"
+                    aria-label="Desconectar do chat de voz"
+                    className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition"
+                  >
+                    <PhoneOff className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    playClickSound();
+                    voice.onToggleVoice();
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-bold hover:bg-cyan-500/25 active:scale-95 transition"
+                >
+                  <PhoneCall className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Ativar Voz</span>
+                </button>
+              )}
+            </>
+          )}
+
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-[11px] font-medium text-slate-300">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>{modeLabel}</span>
@@ -72,15 +160,27 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
         {/* Player X Card */}
         <div
           className={`relative p-3 rounded-2xl transition-all duration-200 border ${
-            isTurnX
+            isSpeakingX
+              ? 'bg-slate-900 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.45)] ring-2 ring-cyan-400/80'
+              : isTurnX
               ? 'bg-slate-900/90 border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.25)] ring-1 ring-cyan-500/50'
               : 'bg-slate-950/70 border-slate-800/80 opacity-80'
           }`}
         >
           <div className="flex items-center justify-between mb-1">
-            <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 font-black text-sm">
-              X
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 font-black text-sm">
+                X
+              </span>
+              {voice?.isActive && (
+                <VoiceWaveIndicator
+                  isActive={true}
+                  isSpeaking={isSpeakingX}
+                  isMuted={isMutedX}
+                  color="cyan"
+                />
+              )}
+            </div>
             <span className="font-mono text-xs font-bold text-slate-400 tabular-nums">
               {playerX.score} pts
             </span>
@@ -103,15 +203,27 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
         {/* Player O Card */}
         <div
           className={`relative p-3 rounded-2xl transition-all duration-200 border ${
-            !isTurnX
+            isSpeakingO
+              ? 'bg-slate-900 border-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.45)] ring-2 ring-rose-400/80'
+              : !isTurnX
               ? 'bg-slate-900/90 border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.25)] ring-1 ring-rose-500/50'
               : 'bg-slate-950/70 border-slate-800/80 opacity-80'
           }`}
         >
           <div className="flex items-center justify-between mb-1">
-            <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 font-black text-sm">
-              O
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 font-black text-sm">
+                O
+              </span>
+              {voice?.isActive && (
+                <VoiceWaveIndicator
+                  isActive={true}
+                  isSpeaking={isSpeakingO}
+                  isMuted={isMutedO}
+                  color="rose"
+                />
+              )}
+            </div>
             <span className="font-mono text-xs font-bold text-slate-400 tabular-nums">
               {playerO.score} pts
             </span>

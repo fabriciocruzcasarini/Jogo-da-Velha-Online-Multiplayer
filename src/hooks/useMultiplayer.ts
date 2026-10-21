@@ -36,8 +36,13 @@ export function useMultiplayer() {
   });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [reactions, setReactions] = useState<FloatingReaction[]>([]);
+  const [remoteVoiceStatus, setRemoteVoiceStatus] = useState<{ isMuted: boolean; isSpeaking: boolean }>({
+    isMuted: false,
+    isSpeaking: false,
+  });
 
   const wsRef = useRef<WebSocket | null>(null);
+  const signalListenerRef = useRef<((signalData: { senderPlayerId: string; signal: any }) => void) | null>(null);
   const pingIntervalRef = useRef<number | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
 
@@ -146,6 +151,15 @@ export function useMultiplayer() {
             setTimeout(() => {
               setReactions((prev) => prev.filter((r) => r.id !== newReaction.id));
             }, 3000);
+          } else if (type === 'webrtc_signal') {
+            if (signalListenerRef.current) {
+              signalListenerRef.current(payload);
+            }
+          } else if (type === 'voice_status') {
+            setRemoteVoiceStatus({
+              isMuted: !!payload.isMuted,
+              isSpeaking: !!payload.isSpeaking,
+            });
           } else if (type === 'error') {
             setErrorMessage(payload.message || 'Ocorreu um erro.');
           }
@@ -276,6 +290,51 @@ export function useMultiplayer() {
     setMySymbol(null);
   }, []);
 
+  const sendWebRTCSignal = useCallback((targetPlayerId: string | null, signal: any) => {
+    const currentRoom = roomRef.current;
+    const currentMyId = myPlayerIdRef.current;
+    if (!currentRoom || !currentMyId) return;
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'webrtc_signal',
+          payload: {
+            roomId: currentRoom.id,
+            senderPlayerId: currentMyId,
+            targetPlayerId,
+            signal,
+          },
+        })
+      );
+    }
+  }, []);
+
+  const sendVoiceStatus = useCallback((isMuted: boolean, isSpeaking: boolean) => {
+    const currentRoom = roomRef.current;
+    const currentMyId = myPlayerIdRef.current;
+    if (!currentRoom || !currentMyId) return;
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'voice_status',
+          payload: {
+            roomId: currentRoom.id,
+            playerId: currentMyId,
+            isMuted,
+            isSpeaking,
+          },
+        })
+      );
+    }
+  }, []);
+
+  const onWebRTCSignal = useCallback((callback: (signalData: { senderPlayerId: string; signal: any }) => void) => {
+    signalListenerRef.current = callback;
+    return () => {
+      signalListenerRef.current = null;
+    };
+  }, []);
+
   return {
     isConnected,
     room,
@@ -283,11 +342,15 @@ export function useMultiplayer() {
     mySymbol,
     errorMessage,
     reactions,
+    remoteVoiceStatus,
     createRoom,
     joinRoom,
     makeMove,
     requestRematch,
     sendReaction,
+    sendWebRTCSignal,
+    sendVoiceStatus,
+    onWebRTCSignal,
     leaveRoom,
     clearError: () => setErrorMessage(null),
   };
