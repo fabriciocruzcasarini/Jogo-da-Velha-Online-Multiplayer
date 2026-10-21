@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import QRCode from 'qrcode';
-import { Copy, Check, Share2, MessageCircle, X, Users, Loader2 } from 'lucide-react';
+import { Copy, Check, Share2, MessageCircle, X, Users, Loader2, Mic } from 'lucide-react';
 import { playClickSound } from '../utils/audio.ts';
 
 interface LobbyModalProps {
@@ -155,6 +155,15 @@ export const LobbyModal: React.FC<LobbyModalProps> = ({
             <MessageCircle className="w-3.5 h-3.5" />
             <span>WhatsApp</span>
           </button>
+        </div>
+
+        {/* Voice Chat Ready Badge */}
+        <div className="w-full flex items-center justify-between px-3 py-2 rounded-2xl bg-cyan-950/30 border border-cyan-500/20 mb-3 text-left">
+          <div className="flex items-center gap-2">
+            <Mic className="w-4 h-4 text-cyan-400" />
+            <span className="text-[11px] text-slate-300 font-medium">Chat de Voz incluso nesta sala</span>
+          </div>
+          <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Ao Vivo</span>
         </div>
 
         {/* Player Status Cluster */}

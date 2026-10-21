@@ -80,7 +80,7 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
         <div className="flex items-center gap-2">
           {/* Voice Chat Control Pill (Online Only) */}
-          {isOnline && voice && (
+          {voice && (
             <>
               {voice.isActive ? (
                 <div className="flex items-center gap-1 bg-slate-900/90 border border-slate-700 p-0.5 rounded-xl">
@@ -243,6 +243,85 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Prominent Voice Chat Banner (Online) */}
+      {voice && !voice.isActive && (
+        <div className="mt-2.5 flex items-center justify-between p-2.5 rounded-2xl bg-gradient-to-r from-cyan-950/60 to-slate-900 border border-cyan-500/30 shadow-md">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+              <Mic className="w-4 h-4 animate-pulse" />
+            </div>
+            <div className="text-left">
+              <span className="block text-xs font-bold text-slate-100">Chat de Voz</span>
+              <span className="block text-[10px] text-slate-400">Fale ao vivo com seu amigo</span>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              playClickSound();
+              voice.onToggleVoice();
+            }}
+            className="px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black shadow-md shadow-cyan-950/50 active:scale-95 transition cursor-pointer"
+          >
+            Habilitar Voz
+          </button>
+        </div>
+      )}
+
+      {voice && voice.isActive && (
+        <div className="mt-2.5 flex items-center justify-between p-2.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-md">
+          <div className="flex items-center gap-2.5">
+            <div
+              className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                voice.isMuted ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'
+              }`}
+            >
+              {voice.isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4 animate-pulse" />}
+            </div>
+            <div className="text-left">
+              <span className="block text-xs font-bold text-slate-100">
+                {voice.isMuted
+                  ? 'Microfone Mutado'
+                  : voice.isSpeakingLocal
+                  ? 'Você está falando...'
+                  : 'Microfone Aberto'}
+              </span>
+              <span className="block text-[10px] text-slate-400">
+                {voice.isSpeakingRemote
+                  ? 'Oponente está falando 🎙️'
+                  : voice.isRemoteMuted
+                  ? 'Oponente mutou o microfone'
+                  : 'Conexão de voz ativa'}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => {
+                playClickSound();
+                voice.onToggleMute();
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition active:scale-95 ${
+                voice.isMuted
+                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
+                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+              }`}
+            >
+              {voice.isMuted ? 'Desmutar' : 'Silenciar'}
+            </button>
+            <button
+              onClick={() => {
+                playClickSound();
+                voice.onToggleVoice();
+              }}
+              title="Desconectar do chat de voz"
+              className="p-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 text-slate-400 transition"
+            >
+              <PhoneOff className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Draw Counter Tabular badge */}
       {draws > 0 && (

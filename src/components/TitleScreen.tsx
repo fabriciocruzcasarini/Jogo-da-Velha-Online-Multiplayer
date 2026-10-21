@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Smartphone, Users, Bot, QrCode, Play, Sparkles, User, Vibrate } from 'lucide-react';
+import { Volume2, VolumeX, Smartphone, Users, Bot, QrCode, Play, Sparkles, User, Vibrate, Mic } from 'lucide-react';
 import { playClickSound, setMuted, getMuted, setHapticEnabled, getHapticEnabled } from '../utils/audio.ts';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
 
@@ -101,12 +101,17 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           </svg>
 
           {/* Mini interactive board preview badge */}
-          <div className="mt-3 flex items-center gap-3 px-3.5 py-1.5 rounded-full bg-slate-900/80 border border-slate-800 shadow-inner">
+          <div className="mt-3 flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-900/80 border border-slate-800 shadow-inner">
             <span className="text-cyan-400 font-extrabold text-sm tracking-wide">X</span>
             <span className="text-slate-600 text-xs">VS</span>
             <span className="text-rose-400 font-extrabold text-sm tracking-wide">O</span>
             <span className="w-1 h-1 rounded-full bg-slate-600" />
             <span className="text-xs text-slate-300">Tempo Real</span>
+            <span className="w-1 h-1 rounded-full bg-slate-600" />
+            <span className="flex items-center gap-1 text-[11px] text-cyan-300 font-semibold">
+              <Mic className="w-3 h-3 text-cyan-400" />
+              Voz
+            </span>
           </div>
         </div>
 
